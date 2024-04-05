@@ -16,11 +16,7 @@
     "sourceType": "module",
     "project": "./tsconfig.json"
   },
-  "plugins": [
-    "@typescript-eslint",
-    "unicorn",
-    "sonarjs"
-  ],
+  "plugins": ["@typescript-eslint", "unicorn", "sonarjs"],
   "rules": {
     "unicorn/filename-case": "off",
     "import/prefer-default-export": "off",
@@ -36,6 +32,8 @@
     "import/no-cycle": "off",
     "unicorn/prefer-export-from": "off",
     "spaced-comment": "off",
-    "import/extensions": "off"
+    "import/extensions": "off",
+    "comma-dangle": "off",
+    "@typescript-eslint/comma-dangle": "off"
   }
 }

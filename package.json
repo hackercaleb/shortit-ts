@@ -19,7 +19,8 @@
     "eslint-plugin-unicorn": "^51.0.1",
     "express": "^4.19.2",
     "mongodb": "^6.5.0",
-    "mongoose": "^8.2.4"
+    "mongoose": "^8.2.4",
+    "nanoid": "3.3.4"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
