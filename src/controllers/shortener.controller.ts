@@ -1,45 +1,32 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { customAlphabet } from 'nanoid';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import ShortenedURL, { IShortenedURL } from '../models/shortener.model';
-
-// Create a custom nanoid generator for generating short URLs
-const nanoidGenerator = customAlphabet(
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  5
-);
+import ShortenedURL from '../models/shortener.model';
+import nanoidGenerator from '../middleware/nanogenerator';
 
 interface CreateUrlBody {
   originalUrl: string;
   customName?: string;
 }
 
-export const createUrls = async (req: Request, res: Response): Promise<void> => {
+export const createUrls = async (req: Request, res: Response): Promise<Response> => {
   const { originalUrl, customName } = req.body as CreateUrlBody;
-  console.log('Received request body:', req.body);
 
   try {
     const existingUrl = await ShortenedURL.findOne({ originalUrl });
-    console.log('Existing URL:', existingUrl);
 
     if (existingUrl) {
-      res.json({
+      return res.json({
         message: 'Original url already exists',
         data: { shortUrl: existingUrl.shortUrl }
       });
-      return;
     }
 
     const shortUrl = customName || nanoidGenerator();
-    console.log('Generated shortUrl:', shortUrl);
 
     const existingShortUrl = await ShortenedURL.findOne({ shortUrl });
-    console.log('Existing shortUrl:', existingShortUrl);
 
     if (existingShortUrl) {
-      res.status(400).json({ message: 'Custom name already in use' });
-      return;
+      return res.status(400).json({ message: 'Custom name already in use' });
     }
 
     const shortenedUrl = new ShortenedURL({
@@ -47,17 +34,15 @@ export const createUrls = async (req: Request, res: Response): Promise<void> => 
       shortUrl: `https://shortit/${shortUrl}`,
       originalUrl
     });
-    console.log('Saving shortenedUrl:', shortenedUrl);
-    await shortenedUrl.save();
-    console.log('Saved shortenedUrl:', shortenedUrl);
 
-    res.json({
+    await shortenedUrl.save();
+
+    return res.json({
       message: 'URL shortened successfully',
       data: { shortUrl: `https://shortit/${shortUrl}` }
     });
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ message: 'Server error' });
+  } catch {
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -71,8 +56,7 @@ export const getUrls = async (req: Request, res: Response) => {
     }
     // to get all urls
     return res.status(200).json(getAllUrls);
-  } catch (error) {
-    console.error(error);
+  } catch {
     return res.status(500).json({ error: 'internal server error' });
   }
 };
@@ -99,10 +83,9 @@ export const deleteUrl = async (req: Request<{ id: string }>, res: Response) => 
 
     return res.status(200).json({
       message: 'URL deleted successfully',
-      data: null
+      data: originalUrlFind
     });
-  } catch (error) {
-    console.error(error);
+  } catch {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };

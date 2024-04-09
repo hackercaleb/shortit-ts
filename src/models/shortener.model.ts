@@ -28,5 +28,12 @@ const shortenedURLSchema: Schema = new mongoose.Schema({
   }
 });
 
+// Define the middleware function
+shortenedURLSchema.pre(/^find/, function (this: any, next) {
+  // Excluding the '__v' field from the query results
+  this.select('-__v');
+  next();
+});
+
 const ShortenedURL = mongoose.model<IShortenedURL>('ShortenedURL', shortenedURLSchema);
 export default ShortenedURL;
