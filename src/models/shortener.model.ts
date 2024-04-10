@@ -10,13 +10,13 @@ export interface IShortenedURL extends Document {
 const shortenedURLSchema: Schema = new mongoose.Schema({
   customName: {
     type: String,
-    unique: true,
-    sparse: true
+    sparse: true,
+    unique: true
   },
   shortUrl: {
     type: String,
-    required: true,
-    unique: true
+    unique: true,
+    required: true
   },
   originalUrl: {
     type: String,
@@ -28,11 +28,13 @@ const shortenedURLSchema: Schema = new mongoose.Schema({
   }
 });
 
-// Define the middleware function
-shortenedURLSchema.pre(/^find/, function (this: any, next) {
-  // Excluding the '__v' field from the query results
-  this.select('-__v');
-  next();
+// Define toJSON option at the top level of the schema
+shortenedURLSchema.set('toJSON', {
+  transform(doc, ret) {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
 });
 
 const ShortenedURL = mongoose.model<IShortenedURL>('ShortenedURL', shortenedURLSchema);
