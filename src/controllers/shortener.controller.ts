@@ -8,7 +8,7 @@ const { OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = HTTP_STATUS_CODES;
 
 function handleCustomName(customName: string): string {
   if (customName && customName.includes(' ')) {
-    return customName.replace(/\s+/g, '-');
+    return customName.replaceAll(/\s+/g, '-');
   }
   return customName;
 }
