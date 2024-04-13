@@ -26,14 +26,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: 'yarn'
 
       - name: Install Package
-        run: npm ci
+        run: yarn install
 
       - name: Check for linting issues
-        run: npm lint
+        run: yarn run lint
 
       - name: Build dist
-        run: npm run build --if-present
+        run: yarn run build
       # - run: npm test
