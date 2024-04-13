@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import logger from './utils/logger';
 const connectDB = async (): Promise<void> => {
   try {
     const mongoURL = process.env.MONGO_URL;
@@ -8,9 +9,9 @@ const connectDB = async (): Promise<void> => {
 
     await mongoose.connect(mongoURL);
 
-    console.log('MongoDB Atlas Connected');
+    logger.info('MongoDB Atlas Connected');
   } catch (error) {
-    console.error('Error connecting to MongoDB Atlas:', error);
+    logger.error('Error connecting to MongoDB Atlas:', error);
   }
 };
 export default connectDB;

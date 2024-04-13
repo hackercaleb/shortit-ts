@@ -2,6 +2,7 @@ import express, { Request, Response, Application } from 'express';
 import dotenv from 'dotenv';
 import route from './routes';
 import connectDB from './db';
+import logger from './utils/logger';
 //For env File
 dotenv.config();
 
@@ -13,7 +14,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server live at http://localhost:${port}`);
+  return logger.info(`Server live at http://localhost:${port}`);
 });
 
 connectDB();
