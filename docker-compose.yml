@@ -1,0 +1,30 @@
+version: '3.7'
+services:
+  mongo:
+    image: 'mongo'
+    restart: unless-stopped
+    ports:
+      - ${MONGO_PORT}:27017
+    env_file:
+      - .env
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - ./data:/data/db
+
+  server:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    expose:
+      - ${PORT}
+    ports:
+      - 8000:8000
+    volumes:
+      - /app/node_modules
+      - ./src:/app/src
