@@ -7,7 +7,8 @@
     "build": "rimraf ./dist && tsc",
     "start": "yarn build && node dist/index.js",
     "dev": "nodemon src/index.ts",
-    "lint": "eslint . --ext .ts,.js"
+    "lint": "eslint . --ext .ts,.js",
+    "docker:up-server-logs": "docker compose up -d && docker compose logs -f server"
   },
   "keywords": [],
   "author": "",

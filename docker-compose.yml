@@ -26,5 +26,5 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - /app/node_modules
       - ./src:/app/src
+      - ./nodemon.json:/app/nodemon.json
