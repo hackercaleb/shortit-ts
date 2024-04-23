@@ -65,20 +65,14 @@ export const getUrls = async (req: Request, res: Response) => {
   }
 };
 
-interface GetSingleUrlRequest extends Request {
-  params: {
-    id: string;
-  };
-}
-
-export const getSingleUrl = async (req: GetSingleUrlRequest, res: Response) => {
+export const getSingleUrl = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const objectids = id.trim();
 
     // Check if the provided ID is a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(objectids)) {
-      return res.status(400).json({ error: 'invalid id format' });
+      return res.status(BAD_REQUEST).json({ error: 'invalid id format' });
     }
 
     // Query the database to find the URL by ID
@@ -86,13 +80,13 @@ export const getSingleUrl = async (req: GetSingleUrlRequest, res: Response) => {
 
     // If the URL with the given ID is not found, return an error
     if (!findOneUrl) {
-      return res.status(404).json({ error: 'url not found' });
+      return res.status(OK).json({ error: 'url not found' });
     }
 
     // Return the URL
-    return res.status(200).json(findOneUrl);
+    return res.status(OK).json(findOneUrl);
   } catch {
-    return res.status(500).json({ error: 'internal server error' });
+    return res.status(INTERNAL_SERVER_ERROR).json({ error: 'internal server error' });
   }
 };
 
@@ -122,16 +116,9 @@ export const deleteUrl = async (req: Request<{ id: string }>, res: Response) => 
   }
 };
 
-interface UpdateURLRequest extends Request {
-  body: {
-    objectid: string;
-    originalUrl?: string;
-    customName?: string;
-  };
-}
-
-export const updateURL = async (req: UpdateURLRequest, res: Response) => {
-  const { objectid, originalUrl, customName } = req.body;
+export const updateURL = async (req: Request, res: Response) => {
+  const { objectid } = req.params;
+  const { originalUrl, customName } = req.body;
 
   try {
     // Query the database to find the URL by ID
@@ -139,7 +126,7 @@ export const updateURL = async (req: UpdateURLRequest, res: Response) => {
 
     // If the URL with the given ID is not found, return an error
     if (!urlToUpdate) {
-      return res.status(404).json({ error: 'URL not found' });
+      return res.status(NOT_FOUND).json({ error: 'URL not found' });
     }
 
     // Update the originalUrl if provided
@@ -158,7 +145,7 @@ export const updateURL = async (req: UpdateURLRequest, res: Response) => {
       });
 
       if (customNameExists) {
-        return res.status(400).json({ error: 'Custom name already exists' });
+        return res.status(BAD_REQUEST).json({ error: 'Custom name already exists' });
       }
 
       urlToUpdate.customName = formattedCustomName;
@@ -167,7 +154,7 @@ export const updateURL = async (req: UpdateURLRequest, res: Response) => {
 
     await urlToUpdate.save();
 
-    return res.json({
+    return res.status(OK).json({
       message: 'URL updated successfully',
       data: {
         originalUrl: urlToUpdate.originalUrl,
@@ -176,6 +163,6 @@ export const updateURL = async (req: UpdateURLRequest, res: Response) => {
       }
     });
   } catch {
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
   }
 };
