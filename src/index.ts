@@ -7,7 +7,7 @@ import logger from './utils/logger';
 dotenv.config();
 
 const app: Application = express();
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 8001;
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Welcome to Shortit URL Shortner API');
