@@ -1,1 +1,4 @@
 dist/
+jest.config.ts
+node_modules
+data
