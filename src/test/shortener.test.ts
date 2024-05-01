@@ -1,3 +1,4 @@
+/*eslint-disable sonarjs/no-duplicate-string */
 import mongoose from 'mongoose';
 
 import { TestFactory } from './factory';
@@ -31,27 +32,26 @@ describe('Shortener', () => {
 
 describe('GET /urls/:id', () => {
   const factory: TestFactory = new TestFactory();
-  let urlId: string;
 
-  beforeEach(async () => {
-    await factory.init();
-    const { body } = await factory.app
-      .post('/urls')
-      .send({ originalUrl: 'https://www.google.com' });
-    urlId = body._id;
+  beforeEach( (done) => {
+    factory.init().then(done);
   });
 
-  afterEach(async () => {
-    await factory.close();
+  afterEach( (done) => {
+    factory.close().then(done);
   });
 
   it('should return a single url', async () => {
-    // Retrieve the created URL
-    const response = await factory.app.get(`/urls/${urlId}`);
+    const res = await factory.app.post('/urls').send({ originalUrl: 'https://www.test.com?id=test' });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('id');
 
-    // Check the response
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('originalUrl', 'https://www.google.com');
+    const urlId = res.body.data.id;
+    const res2 = await factory.app.get(`/urls/${urlId}`);
+
+    expect(res2.status).toBe(200);
+    expect(res2.body).toHaveProperty('originalUrl', 'https://www.test.com?id=test');
+    expect(res2.body).toHaveProperty('shortUrl');
   });
 
   it('should return an error if the url does not exist', async () => {
@@ -70,16 +70,15 @@ describe('GET /urls/:id', () => {
 describe('POST /urls', () => {
   const factory: TestFactory = new TestFactory();
 
-  beforeEach(async () => {
-    await factory.init();
+  beforeEach( (done) => {
+    factory.init().then(done);
   });
 
-  afterEach(async () => {
-    await factory.close();
+  afterEach( (done) => {
+    factory.close().then(done);
   });
 
   it('should save url and return a new shortened url', async () => {
-    // eslint-disable-next-line sonarjs/no-duplicate-string
     const originalUrl = 'https://www.example.com';
     const response = await factory.app.post('/urls').send({ originalUrl });
 
@@ -107,38 +106,32 @@ describe('POST /urls', () => {
 
     const response = await factory.app.post('/urls').send({ originalUrl });
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
     expect(response.body).toHaveProperty('message', 'Original URL already exists');
     expect(response.body.data).toHaveProperty('shortUrl');
   });
 
   it('should return an error if custom name already exists', async () => {
-    const originalUrl = 'https://www.example.com';
+    const originalUrl = 'https://www.test.example.com';
     const customName = 'example';
-    await factory.app.post('/urls').send({ originalUrl, customName });
+    const res1 = await factory.app.post('/urls').send({ originalUrl, customName });
+    expect(res1.status).toBe(200);
 
-    const response = await factory.app.post('/urls').send({ originalUrl, customName });
-
+    const response = await factory.app.post('/urls').send({ originalUrl: `${originalUrl}?id=example`, customName });
     expect(response.status).toBe(400);
-    expect(response.body).toHaveProperty('error', 'Custom name already in use');
+    expect(response.body).toHaveProperty('message', 'Custom name already in use');
   });
 });
 
 describe('DELETE /urls/:id', () => {
   const factory: TestFactory = new TestFactory();
 
-  let urlId: string;
-
-  beforeEach(async () => {
-    await factory.init();
-    const { body } = await factory.app
-      .post('/urls')
-      .send({ originalUrl: 'https://www.example.com' });
-    urlId = body._id;
+  beforeEach( (done) => {
+    factory.init().then(done);
   });
 
-  afterEach(async () => {
-    await factory.close();
+  afterEach( (done) => {
+    factory.close().then(done);
   });
 
   it('should return a 400 error for an invalid id format', async () => {
@@ -155,9 +148,15 @@ describe('DELETE /urls/:id', () => {
   });
 
   it('should delete the url and return the deleted url details', async () => {
+    const res = await factory.app
+      .post('/urls')
+      .send({ originalUrl: 'https://www.example123.com' });
+    const urlId = res.body.data.id;
+    expect(res.status).toBe(200);
+
     const response = await factory.app.delete(`/urls/${urlId}`);
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('message', 'URL deleted successfully');
-    expect(response.body.data).toHaveProperty('originalUrl', 'https://www.example.com');
+    expect(response.body.data).toHaveProperty('originalUrl', 'https://www.example123.com');
   });
 });

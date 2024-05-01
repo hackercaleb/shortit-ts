@@ -25,9 +25,9 @@ export const createUrls = async (req: Request, res: Response): Promise<Response>
   try {
     const existingUrl = await ShortenedURL.findOne({ originalUrl });
     if (existingUrl) {
-      return res.status(OK).json({
+      return res.status(BAD_REQUEST).json({
         message: 'Original URL already exists',
-        data: { shortUrl: existingUrl.shortUrl }
+        data: { id: existingUrl._id, shortUrl: existingUrl.shortUrl }
       });
     }
 
@@ -51,11 +51,11 @@ export const createUrls = async (req: Request, res: Response): Promise<Response>
       shortUrl: `https://shortit/${shortUrl}`,
       originalUrl
     });
-    await shortenedUrl.save();
+    const savedUrl = await shortenedUrl.save();
 
     return res.json({
       message: 'URL shortened successfully',
-      data: { shortUrl: `https://shortit/${shortUrl}` }
+      data: { id: savedUrl._id, shortUrl: `https://shortit/${shortUrl}` }
     });
   } catch (error) {
     logger.error('Error creating shortened URL:', error);
@@ -127,58 +127,6 @@ export const deleteUrl = async (req: Request<{ id: string }>, res: Response) => 
   }
 };
 
-/*export const updateURL = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { originalUrl, customName } = req.body;
-
-  try {
-    // Query the database to find the URL by ID
-    const urlToUpdate = await ShortenedURL.findById(id);
-
-    // If the URL with the given ID is not found, return an error
-    if (!urlToUpdate) {
-      return res.status(NOT_FOUND).json({ error: 'URL not found' });
-    }
-
-    // Update the originalUrl if provided
-    if (originalUrl) {
-      urlToUpdate.originalUrl = originalUrl;
-    }
-
-    // Handle customName if provided
-    if (customName) {
-      const formattedCustomName = customName.replaceAll(' ', '-');
-
-      // Check if the custom name already exists for another entry
-      const customNameExists = await ShortenedURL.findOne({
-        customName: formattedCustomName,
-        _id: { $ne: urlToUpdate._id }
-      });
-
-      if (customNameExists) {
-        return res.status(BAD_REQUEST).json({ error: 'Custom name already exists' });
-      }
-
-      urlToUpdate.customName = formattedCustomName;
-      urlToUpdate.shortUrl = `https://shortit/${formattedCustomName}`;
-    }
-
-    await urlToUpdate.save();
-
-    return res.status(OK).json({
-      message: 'URL updated successfully',
-      data: {
-        originalUrl: urlToUpdate.originalUrl,
-        customName: urlToUpdate.customName,
-        shortUrl: urlToUpdate.shortUrl
-      }
-    });
-  } catch {
-    return res.status(INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
-  }
-};
-*/
-
 export const updateURL = async (req: Request, res: Response) => {
   const { id } = req.params;
   const ID = id.trim();
@@ -230,5 +178,3 @@ export const updateURL = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-export default updateURL;
