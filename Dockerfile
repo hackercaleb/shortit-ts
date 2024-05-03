@@ -8,10 +8,10 @@ WORKDIR /usr/app
 COPY ./package*.json ./
 
 # Download and install dependencies
-RUN npm install
+RUN yarn install
 
 # Copy the rest of the application
 COPY ./ ./
 
 # Command to run your app
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
