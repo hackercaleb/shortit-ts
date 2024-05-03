@@ -14,7 +14,7 @@ router.post('/urls', urlValidatorRules, validate, createUrls);
 router.get('/urls', getUrls);
 router.get('/urls/:id', getSingleUrl);
 
-router.put('/urls/:ID', updateURL);
+router.put('/urls/:id', updateURL);
 router.delete('/urls/:id', deleteUrl);
 
 export default router;
