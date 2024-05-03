@@ -2,7 +2,6 @@
 import mongoose from 'mongoose';
 
 import { TestFactory } from './factory';
-import ShortenedURL from '../models/shortener.model';
 
 describe('Shortener', () => {
   describe('GET /urls', () => {
@@ -175,14 +174,18 @@ describe('PUT /urls/:id', () => {
     factory.close().then(done);
   });
 
+  // Check for less than 5 characters in customName
+  // Check for invalid URL
   it('should update a single url', async () => {
-    const originalUrl = 'https://www.example.com';
+    const originalUrl = 'https://www.example1.com';
     const res1 = await factory.app.post('/urls').send({ originalUrl });
     expect(res1.status).toBe(200);
+    expect(res1.body.data).toHaveProperty('id');
 
+    const urlId = res1.body.data.id;
     const updatedUrl = 'https://www.updatedurl.com';
     const res2 = await factory.app
-      .put(`/urls/${res1.body.data.shortUrl.split('/').pop()}`)
+      .put(`/urls/${urlId}`)
       .send({ originalUrl: updatedUrl });
 
     expect(res2.status).toBe(200);
@@ -201,31 +204,50 @@ describe('PUT /urls/:id', () => {
   });
 
   it('should return an error if the request body is invalid', async () => {
-    const originalUrl = 'https://www.example.com';
+    const originalUrl = 'https://www.example2.com';
     const res1 = await factory.app.post('/urls').send({ originalUrl });
     expect(res1.status).toBe(200);
+    expect(res1.body.data).toHaveProperty('id');
 
+    const urlId = res1.body.data.id;
+    // no originalUrl or customName
     const res2 = await factory.app
-      .put(`/urls/${res1.body.data.shortUrl.split('/').pop()}`)
+      .put(`/urls/${urlId}`)
       .send({ invalidField: 'invalid' });
 
     expect(res2.status).toBe(400);
     expect(res2.body).toHaveProperty('error');
+
+    // Check for less than 5 characters in customName
+    const res3 = await factory.app
+      .put(`/urls/${urlId}`)
+      .send({ originalUrl, customName: 'test' });
+    expect(res3.status).toBe(400);
+
+    // Check for invalid URL
+    const res4 = await factory.app
+      .put(`/urls/${urlId}`)
+      .send({ originalUrl: 'invalidurl' });
+    expect(res4.status).toBe(400);
   });
 
   it('should return an error if custom name already exists', async () => {
-    const originalUrl1 = 'https://www.test.example.com';
-    const customName = 'example';
+    const originalUrl1 = 'https://www.test.example3.com';
+    const customName = 'example3';
 
     // Create a URL with the customName
     const res1 = await factory.app.post('/urls').send({ originalUrl: originalUrl1, customName });
     expect(res1.status).toBe(200);
 
+    const res2 = await factory.app.post('/urls').send({ originalUrl: `${originalUrl1}?id=people` });
+    expect(res2.status).toBe(200);
+
     // Attempt to update the URL with the same custom name
-    const res2 = await factory.app
-      .put(`/urls/${res1.body.data._id}`)
-      .send({ originalUrl: originalUrl1, customName });
-    expect(res2.status).toBe(400);
-    expect(res2.body).toHaveProperty('message', 'Custom name already exists');
+    const urlId = res2.body.data.id;
+    const res3 = await factory.app
+      .put(`/urls/${urlId}`)
+      .send({ customName });
+    expect(res3.status).toBe(400);
+    expect(res3.body).toHaveProperty('error', 'Custom name already exists');
   });
 });
