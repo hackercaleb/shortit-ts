@@ -33,16 +33,18 @@ describe('Shortener', () => {
 describe('GET /urls/:id', () => {
   const factory: TestFactory = new TestFactory();
 
-  beforeEach( (done) => {
+  beforeEach((done) => {
     factory.init().then(done);
   });
 
-  afterEach( (done) => {
+  afterEach((done) => {
     factory.close().then(done);
   });
 
   it('should return a single url', async () => {
-    const res = await factory.app.post('/urls').send({ originalUrl: 'https://www.test.com?id=test' });
+    const res = await factory.app
+      .post('/urls')
+      .send({ originalUrl: 'https://www.test.com?id=test' });
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('id');
 
@@ -70,11 +72,11 @@ describe('GET /urls/:id', () => {
 describe('POST /urls', () => {
   const factory: TestFactory = new TestFactory();
 
-  beforeEach( (done) => {
+  beforeEach((done) => {
     factory.init().then(done);
   });
 
-  afterEach( (done) => {
+  afterEach((done) => {
     factory.close().then(done);
   });
 
@@ -117,7 +119,9 @@ describe('POST /urls', () => {
     const res1 = await factory.app.post('/urls').send({ originalUrl, customName });
     expect(res1.status).toBe(200);
 
-    const response = await factory.app.post('/urls').send({ originalUrl: `${originalUrl}?id=example`, customName });
+    const response = await factory.app
+      .post('/urls')
+      .send({ originalUrl: `${originalUrl}?id=example`, customName });
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty('message', 'Custom name already in use');
   });
@@ -126,11 +130,11 @@ describe('POST /urls', () => {
 describe('DELETE /urls/:id', () => {
   const factory: TestFactory = new TestFactory();
 
-  beforeEach( (done) => {
+  beforeEach((done) => {
     factory.init().then(done);
   });
 
-  afterEach( (done) => {
+  afterEach((done) => {
     factory.close().then(done);
   });
 
@@ -148,9 +152,7 @@ describe('DELETE /urls/:id', () => {
   });
 
   it('should delete the url and return the deleted url details', async () => {
-    const res = await factory.app
-      .post('/urls')
-      .send({ originalUrl: 'https://www.example123.com' });
+    const res = await factory.app.post('/urls').send({ originalUrl: 'https://www.example123.com' });
     const urlId = res.body.data.id;
     expect(res.status).toBe(200);
 
@@ -158,5 +160,94 @@ describe('DELETE /urls/:id', () => {
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('message', 'URL deleted successfully');
     expect(response.body.data).toHaveProperty('originalUrl', 'https://www.example123.com');
+  });
+});
+
+describe('PUT /urls/:id', () => {
+  const factory: TestFactory = new TestFactory();
+
+  beforeEach((done) => {
+    factory.init().then(done);
+  });
+
+  afterEach((done) => {
+    factory.close().then(done);
+  });
+
+  // Check for less than 5 characters in customName
+  // Check for invalid URL
+  it('should update a single url', async () => {
+    const originalUrl = 'https://www.example1.com';
+    const res1 = await factory.app.post('/urls').send({ originalUrl });
+    expect(res1.status).toBe(200);
+    expect(res1.body.data).toHaveProperty('id');
+
+    const urlId = res1.body.data.id;
+    const updatedUrl = 'https://www.updatedurl.com';
+    const res2 = await factory.app
+      .put(`/urls/${urlId}`)
+      .send({ originalUrl: updatedUrl });
+
+    expect(res2.status).toBe(200);
+    expect(res2.body).toHaveProperty('message', 'URL updated successfully');
+    expect(res2.body.data.originalUrl).toBe(updatedUrl);
+  });
+
+  it('should return an error if the url id does not exist', async () => {
+    const nonExistingId = new mongoose.Types.ObjectId();
+    const res = await factory.app
+      .put(`/urls/${nonExistingId}`)
+      .send({ originalUrl: 'https://www.updatedurl.com' });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('error', 'URL not found');
+  });
+
+  it('should return an error if the request body is invalid', async () => {
+    const originalUrl = 'https://www.example2.com';
+    const res1 = await factory.app.post('/urls').send({ originalUrl });
+    expect(res1.status).toBe(200);
+    expect(res1.body.data).toHaveProperty('id');
+
+    const urlId = res1.body.data.id;
+    // no originalUrl or customName
+    const res2 = await factory.app
+      .put(`/urls/${urlId}`)
+      .send({ invalidField: 'invalid' });
+
+    expect(res2.status).toBe(400);
+    expect(res2.body).toHaveProperty('error');
+
+    // Check for less than 5 characters in customName
+    const res3 = await factory.app
+      .put(`/urls/${urlId}`)
+      .send({ originalUrl, customName: 'test' });
+    expect(res3.status).toBe(400);
+
+    // Check for invalid URL
+    const res4 = await factory.app
+      .put(`/urls/${urlId}`)
+      .send({ originalUrl: 'invalidurl' });
+    expect(res4.status).toBe(400);
+  });
+
+  it('should return an error if custom name already exists', async () => {
+    const originalUrl1 = 'https://www.test.example3.com';
+    const customName = 'example3';
+
+    // Create a URL with the customName
+    const res1 = await factory.app.post('/urls').send({ originalUrl: originalUrl1, customName });
+    expect(res1.status).toBe(200);
+
+    const res2 = await factory.app.post('/urls').send({ originalUrl: `${originalUrl1}?id=people` });
+    expect(res2.status).toBe(200);
+
+    // Attempt to update the URL with the same custom name
+    const urlId = res2.body.data.id;
+    const res3 = await factory.app
+      .put(`/urls/${urlId}`)
+      .send({ customName });
+    expect(res3.status).toBe(400);
+    expect(res3.body).toHaveProperty('error', 'Custom name already exists');
   });
 });

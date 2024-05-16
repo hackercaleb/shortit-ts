@@ -128,17 +128,26 @@ export const deleteUrl = async (req: Request<{ id: string }>, res: Response) => 
 };
 
 export const updateURL = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const ID = id.trim();
-  const { originalUrl, customName } = req.body;
-
   try {
+    const { id } = req.params;
+    const { originalUrl, customName } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(BAD_REQUEST).json({ error: 'Invalid ID format' });
+    }
+
+    if (!originalUrl && !customName) {
+      return res
+        .status(BAD_REQUEST)
+        .json({ error: 'At least one of originalUrl or customName is required' });
+    }
+
     // Query the database to find the URL by ID
-    const urlToUpdate = await ShortenedURL.findById(ID);
+    const urlToUpdate = await ShortenedURL.findById(id);
 
     // If the URL with the given ID is not found, return an error
     if (!urlToUpdate) {
-      return res.status(404).json({ error: 'URL not found' });
+      return res.status(NOT_FOUND).json({ error: 'URL not found' });
     }
 
     // Update the originalUrl if provided
@@ -157,7 +166,7 @@ export const updateURL = async (req: Request, res: Response) => {
       });
 
       if (customNameExists) {
-        return res.status(400).json({ error: 'Custom name already exists' });
+        return res.status(BAD_REQUEST).json({ error: 'Custom name already exists' });
       }
 
       urlToUpdate.customName = formattedCustomName;
@@ -166,7 +175,7 @@ export const updateURL = async (req: Request, res: Response) => {
 
     await urlToUpdate.save();
 
-    return res.json({
+    return res.status(OK).json({
       message: 'URL updated successfully',
       data: {
         originalUrl: urlToUpdate.originalUrl,
@@ -175,6 +184,6 @@ export const updateURL = async (req: Request, res: Response) => {
       }
     });
   } catch {
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
   }
 };

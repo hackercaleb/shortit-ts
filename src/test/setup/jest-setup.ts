@@ -3,7 +3,7 @@ import { CONTAINER_NAME, isContainerRunning, setupMongoContainer } from './docke
 export const testDatabaseConfig = {
   user: 'test',
   password: 'test',
-  port: '27017',
+  port: '27018',
   database: 'testdb'
 };
 
